@@ -12,7 +12,7 @@ int main(int argc, char *argv[]){
         perror("\nrunsim: Error: shmget call failed."); //error checking shmget() call
 
     if ((shared_memory_address = shmat(shared_memory_id, NULL, 0)) == (char *) -1)  //call to shmat() to return the memory address of the shared_memory_id
-        perror("\nrunsim: Error: shmat call failed.");  //error checking shmat() call
+        perror("\nrunsim: Error: shmat call failed.\n");  //error checking shmat() call
 
     printf("\nContent of Shared Memory is %s", shared_memory_address);
 
@@ -21,14 +21,12 @@ int main(int argc, char *argv[]){
     if ((shmdt(shared_memory_address)) == -1)       //call to shmdt() to detach from the shared memory address
         perror("\nrunsim: Error: Shared memory cannot be detached\n");
 
-    printf("\nShared memory was successfully detached\n");
+    printf("\nProcess %d completed execution\n", getpid());
 
-    if (shmctl(shared_memory_id, IPC_RMID, NULL) != 0)      //shmctl() marks the shared_memory_id for destruction so it can be deallocated from memory after no process is using it
-        perror("\nrunsim: Error: shmctl() call failed. Segment cannot be marked for destruction\n"); //error checking shmctl() call
+    printf("\nShared memory was successfully detached from by Child process\n");
 
-    printf("\nShared memory %d is now marked for destruction when no process is using it. Verify by the ipcs command.\n", shared_memory_id);
+   // while(1);
 
     return 0;
-
 
 }

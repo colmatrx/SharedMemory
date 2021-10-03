@@ -44,3 +44,15 @@ void logmsg(const char *msg){       //this function is for writing to logfile
        
 
 }
+
+char *logeventtime(void){
+
+    time_t msgtime; char *logtime;
+    
+    time(&msgtime);
+
+    logtime = ctime(&msgtime);
+
+    return logtime;
+
+}
