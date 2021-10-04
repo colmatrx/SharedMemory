@@ -1,31 +1,46 @@
-#include"config.h"
+#include<stdio.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include<sys/types.h>
+#include<unistd.h>
+#include<string.h>
+#include<strings.h>
+#include<time.h>
+#include<sys/wait.h>
+#include<signal.h>
+#include<stdlib.h>
+void testsim(int, int);
 
-int shared_memory_id; 
-char *shared_memory_address;
+int shared_memoryid; 
+char *shared_memoryaddress;
+int shared_memory_key = 32714;
+
 
 
 int main(int argc, char *argv[]){
 
+    long int arg1, arg2;
+
+    arg1 = strtol(argv[1], NULL, 10); arg2 = strtol(argv[2], NULL, 10);
+
     printf("\nexecuting testsim\n");
 
-    if ((shared_memory_id = shmget(shared_memory_key, 100, 0666)) == -1)   //call to create a shared memory segment with shmget() with permissions 0666
+    if ((shared_memoryid = shmget(shared_memory_key, 100, 0666)) == -1)   //call to create a shared memory segment with shmget() with permissions 0666
         perror("\nrunsim: Error: shmget call failed."); //error checking shmget() call
 
-    if ((shared_memory_address = shmat(shared_memory_id, NULL, 0)) == (char *) -1)  //call to shmat() to return the memory address of the shared_memory_id
+    if ((shared_memoryaddress = shmat(shared_memoryid, NULL, 0)) == (char *) -1)  //call to shmat() to return the memory address of the shared_memory_id
         perror("\nrunsim: Error: shmat call failed.\n");  //error checking shmat() call
 
-    printf("\nContent of Shared Memory is %s", shared_memory_address);
+    printf("\nContent of Shared Memory is %s", shared_memoryaddress);
 
-    testsim(atoi(argv[1]), atoi(argv[2])); //takes command line args sleeptime and repeatfactor
+    testsim(arg1, arg2 ); //takes command line args sleeptime and repeatfactor
 
-    if ((shmdt(shared_memory_address)) == -1)       //call to shmdt() to detach from the shared memory address
+    if ((shmdt(shared_memoryaddress)) == -1)       //call to shmdt() to detach from the shared memory address
         perror("\nrunsim: Error: Shared memory cannot be detached\n");
 
     printf("\nProcess %d completed execution\n", getpid());
 
-    printf("\nShared memory was successfully detached from by Child process\n");
-
-   // while(1);
+    printf("\nShared memory was successfully detached from by Child process %d\n", getpid());
 
     return 0;
 

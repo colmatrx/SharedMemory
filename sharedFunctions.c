@@ -1,3 +1,14 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include<sys/types.h>
+#include<unistd.h>
+#include<string.h>
+#include<strings.h>
+#include<time.h>
+#include<sys/wait.h>
+#include<signal.h>
 #include"config.h"
 
 time_t  msgtime;
