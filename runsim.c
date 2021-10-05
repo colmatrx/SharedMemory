@@ -11,13 +11,13 @@
 #include<signal.h>
 #include "config.h"
 
-int forkcount;
+int count, forkcount; 
 
 int pid[max_number_of_processes];
 
-char buff[200] = "\0";
+//char buff[1024] = "\0";
 
-char successstring[200] = "\0"; char *successtime;
+char successstring[1024] = "\0"; char *successtime;
 
 void siginthandler(int sig);
 
@@ -39,6 +39,7 @@ char *shared_memory_address;
 
 int main(int argc, char *argv[]){
 
+    char filestore[1024]; char execlargv1[2] = "\0"; char execlagrv2[2] = "\0";
     
     //In Parent process
 
@@ -54,7 +55,7 @@ int main(int argc, char *argv[]){
 
     nlicense = strtol(argv[1], NULL, 10); //copies command line license into global variable nlicense
 
-    if ((atoi(argv[1]) > max_number_of_processes) || (atoi(argv[1]) == 0)){     //test if number of licenses is more than 20. atoi() converts char to integer
+    if ((nlicense > max_number_of_processes) || (nlicense == 0)){     //test if number of licenses is more than 20. atoi() converts char to integer
         perror("\nrunsim: Error: Minimun number of licenses allowed is 1.\nMaximum of number of licenses/processes allowed is 20.");    //use of perror
         exit(1);
     }
@@ -62,31 +63,41 @@ int main(int argc, char *argv[]){
     initlicense();
     
     printf("\nShared memory has been created and attached.\nKey is %x. ID is %d. Address is %p.\n", shared_memory_key, shared_memory_id, shared_memory_address);
+
+    //start reading input here and fork based on the number of testsim in the input file
    
-    for (forkcount = 0; forkcount < nlicense; forkcount++){    //forking nlicense number of child processes
+    while (fgets(filestore, 1024, stdin) != NULL){ //reads from the stdin
+            
+            forkcount = forkcount + 1;
+            
+            printf("%s",filestore);
 
-        pid[forkcount] = fork();
+            execlargv1[0] = filestore[8];
+            execlagrv2[0] = filestore[10];
 
-        if (pid[forkcount] < 0){
-        perror("\nrunsim: Error: fork() failed!\n");
-        exit(1);
-        }
+            pid[forkcount - 1] = fork();
 
-        if (pid[forkcount] == 0){       //In Child process
-        
-        printf("\nThis is Child Process ID %d getting license\n", getpid());
+            if (pid[forkcount - 1] < 0){
+                perror("\nrunsim: Error: fork() failed!\n");
+                exit(1);
+            }
 
-        sleep(5); 
+            if (pid[forkcount - 1] == 0){       //In Child process
+       
+                printf("\nThis is Child Process ID %d getting license\n", getpid());
 
-        while (getlicense() == 0); //waiting while no license is available
+                sleep(5); 
 
-        printf("\nThis is Child Process ID %d -> license obtained\n", getpid());
+                while (getlicense() == 0); //waiting while no license is available
 
-        removelicenses(1);
+                printf("\nThis is Child Process ID %d -> license obtained\n", getpid());
 
-        execl("./testsim", "./testsim", "2", "3", NULL); //how to use execl to execute testsim. exec will not allow execution of codes after this line when it returns
-        }
+                removelicenses(1);
 
+                execl("./testsim", "./testsim", execlargv1, execlagrv2, NULL); //how to use execl to execute testsim. exec will not allow execution of codes after this line when it returns
+
+                return 0;
+            }
     }   
 
     //Back In Parent process
@@ -95,15 +106,17 @@ int main(int argc, char *argv[]){
             signal(SIGALRM, timeouthandler); //handles the timeout signal
             alarm(appication_wait_timeout); //fires timeout alarm after 100 seconds
 
-            printf("\nThis is parent process ID %d\n", getpid());
+            printf("\nThis is parent process ID %d, forkcount = %d\n", getpid(), forkcount);
             printf("\nWaiting for child processes signal\n");
-            for (forkcount = 0; forkcount < nlicense; forkcount++){ //waiting for every process to finish ie. send SIGCHLD
+            for (count = 0; count < forkcount; count++){ //waiting for every process to finish ie. send SIGCHLD
                 wait(0);
-                printf("\n%d process completed\n", forkcount+1);
+                printf("\n%d process completed\n", count+1);
                 returnlicense();    //call return license to add to the number of licenses when a child process finishes
             }
 
             printf("\nParent has stopped waiting because Child processes are now done\n");
+
+            printf("\nChecking on all licenses....%s licenses restored\n", shared_memory_address);
 
              if ((shmdt(shared_memory_address)) == -1){       //call to shmdt() to detach from the shared memory address
                 perror("\nrunsim: Error: In Parent process: Shared memory cannot be detached\n");
@@ -130,12 +143,12 @@ int main(int argc, char *argv[]){
 //signal handler blocks
 void siginthandler(int sig){    //function to handle Ctrl+C signal interrupt
 
-    char *log_time; char errorstring[200] = "\0";
+    char *log_time; char errorstring[1024] = "\0";
 
     printf("\nCtrl+C received. Aborting Child and Parent Processes..\n");
 
-    for (forkcount = 0; forkcount < nlicense; forkcount++)
-        kill(pid[forkcount], SIGKILL); //sending a kill signal to the child processes to forcefully terminate them after Ctrl+C is received
+    for (count = 0; count < forkcount; count++)
+        kill(pid[count], SIGKILL); //sending a kill signal to the child processes to forcefully terminate them after Ctrl+C is received
 
     if ((shmdt(shared_memory_address)) == -1) {      //call to shmdt() to detach from the shared memory address
             perror("\nrunsim: Error: Signal Handler: Shared memory cannot be detached\n");
@@ -165,12 +178,12 @@ void siginthandler(int sig){    //function to handle Ctrl+C signal interrupt
 
 void timeouthandler(int sig){
 
-    char *log_time; char errorstring[200] = "\0";
+    char *log_time; char errorstring[1024] = "\0";
 
     printf("\nrunsim timeout. Aborting Child and Parent Processes..\n");
 
-    for (forkcount = 0; forkcount < nlicense; forkcount++)
-        kill(pid[forkcount], SIGKILL); //sending a kill signal to the child processes to forcefully terminate them after timeout
+    for (count = 0; count < forkcount; count++)
+        kill(pid[count], SIGKILL); //sending a kill signal to the child processes to forcefully terminate them after timeout
 
     if ((shmdt(shared_memory_address)) == -1){       //call to shmdt() to detach from the shared memory address
             perror("\nrunsim: Error: In Timeout handler: Shared memory cannot be detached\n");

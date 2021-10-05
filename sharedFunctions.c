@@ -13,7 +13,7 @@
 
 time_t  msgtime;
 
-char logstring[200] = "\0";
+char logstring[1024] = "\0";
 
 
 void testsim(int sleepTime, int repeatFactor){      //textsim() sleeps for sleepTime seconds in a loop counted by repeatFactor

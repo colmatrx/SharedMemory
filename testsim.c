@@ -25,18 +25,23 @@ int main(int argc, char *argv[]){
 
     printf("\nexecuting testsim\n");
 
-    if ((shared_memoryid = shmget(shared_memory_key, 100, 0666)) == -1)   //call to create a shared memory segment with shmget() with permissions 0666
-        perror("\nrunsim: Error: shmget call failed."); //error checking shmget() call
+    if ((shared_memoryid = shmget(shared_memory_key, 100, 0666)) == -1){   //call to create a shared memory segment with shmget() with permissions 0666
+        perror("\nrunsim: Error: In testsim application: shmget call failed."); //error checking shmget() call
+        exit(1);
+    }
 
-    if ((shared_memoryaddress = shmat(shared_memoryid, NULL, 0)) == (char *) -1)  //call to shmat() to return the memory address of the shared_memory_id
-        perror("\nrunsim: Error: shmat call failed.\n");  //error checking shmat() call
-
+    if ((shared_memoryaddress = shmat(shared_memoryid, NULL, 0)) == (char *) -1){  //call to shmat() to return the memory address of the shared_memory_id
+        perror("\nrunsim: Error: In testsim application: shmat call failed.\n");  //error checking shmat() call
+        exit(1);
+    }
     printf("\nContent of Shared Memory is %s", shared_memoryaddress);
 
     testsim(arg1, arg2 ); //takes command line args sleeptime and repeatfactor
 
-    if ((shmdt(shared_memoryaddress)) == -1)       //call to shmdt() to detach from the shared memory address
-        perror("\nrunsim: Error: Shared memory cannot be detached\n");
+    if ((shmdt(shared_memoryaddress)) == -1){       //call to shmdt() to detach from the shared memory address
+        perror("\nrunsim: Error: In testsim application: Shared memory cannot be detached\n");
+        exit(1);
+    }
 
     printf("\nProcess %d completed execution\n", getpid());
 
