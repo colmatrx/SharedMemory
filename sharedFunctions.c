@@ -11,13 +11,16 @@
 #include<signal.h>
 #include"config.h"
 
+/*Author Idris Adeleke CS4760 Project 2 - Concurrent Linux Programming and SHared Memory*/
+//This file contains functions that are shared by both testsim and runsim
+
 time_t  msgtime;
 
-char logstring[1024] = "\0";
+char logstring[2048] = "\0";
 
 
 void testsim(int sleepTime, int repeatFactor){      //textsim() sleeps for sleepTime seconds in a loop counted by repeatFactor
-
+                                                    //gets called by testsim application.
     int count = 0; char *logtime;
 
     for (count = 0; count < repeatFactor; count++){
@@ -56,7 +59,7 @@ void logmsg(const char *msg){       //this function is for writing to logfile
 
 }
 
-char *logeventtime(void){
+char *logeventtime(void){       //thi function is for retrieving the system time for logging purposes
 
     time_t msgtime; char *logtime;
     
